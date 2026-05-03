@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <rect width="200" height="200" rx="20" fill="#1d4ed8"/>
+  <path d="M100 30 L160 65 L160 135 L100 170 L40 135 L40 65 Z" fill="none" stroke="white" stroke-width="6"/>
+  <path d="M100 50 L145 75 L145 125 L100 150 L55 125 L55 75 Z" fill="rgba(255,255,255,0.15)"/>
+  <text x="100" y="115" font-family="Inter,sans-serif" font-size="42" font-weight="700" fill="white" text-anchor="middle">CSC</text>
+</svg>

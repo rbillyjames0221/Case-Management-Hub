@@ -1,0 +1,177 @@
+Create a production-ready Case Management System for the Office of Legal Affairs (Civil Service Commission).
+
+Tech Stack:
+- Frontend: Next.js (App Router) + TypeScript + TailwindCSS
+- Backend: Next.js API routes or separate Node.js (Express optional)
+- Database: MySQL
+- ORM: Prisma (schema.prisma required)
+- Auth: JWT + Role-Based Access Control (RBAC)
+- File Storage: Local (for now) with abstraction for S3
+- State: React Query / Zustand
+
+System Type:
+A secure, scalable, government-grade Legal Case Management System.
+
+---
+
+CORE MODULES:
+
+1. AUTHENTICATION & ROLES
+- Roles:
+  - SUPER_ADMIN
+  - LEGAL_ADMIN
+  - LAWYER
+  - STAFF
+  - USER (complainant/respondent)
+- Features:
+  - Login / Logout
+  - Password hashing (bcrypt)
+  - Role-based route protection
+  - Audit logging for logins
+
+---
+
+2. HOMEPAGE (PUBLIC WEBSITE)
+- Sections:
+  - Hero section (Office of Legal Affairs overview)
+  - About the Office
+  - Services Offered
+  - Case Filing Guide
+  - Announcements / Notices
+  - Contact Information
+- CTA:
+  - “File a Case”
+  - “Track Your Case”
+
+---
+
+3. USER DASHBOARD (CITIZENS / CLIENTS)
+Features:
+- Submit a Case
+- Upload Documents
+- Case Tracking Timeline
+- Messaging with Legal Office
+- Notifications
+- Personal File Repository
+- Download submitted files
+- View assigned lawyer
+
+---
+
+4. ADMIN DASHBOARD
+Features:
+- Case Management Panel
+- Assign Lawyers to Cases
+- Case Status Updates
+- Internal Notes (not visible to users)
+- Hearing Scheduling
+- Document Review & Approval
+- Analytics Dashboard (case stats)
+- User Management (CRUD)
+- Role Assignment
+- Audit Logs
+
+---
+
+5. LAWYER DASHBOARD
+Features:
+- Assigned Cases
+- Case Notes
+- Hearing Calendar
+- Evidence Management
+- Communication with clients
+
+---
+
+6. CASE MANAGEMENT CORE
+Case Lifecycle:
+- Filed
+- Under Review
+- Investigation
+- Hearing Scheduled
+- Resolved
+- Archived
+
+Each case includes:
+- Case Number (auto-generated)
+- Title
+- Description
+- Parties Involved
+- Attachments
+- Assigned Lawyer
+- Status
+- Timeline history
+
+---
+
+7. FILE MANAGEMENT SYSTEM
+- Upload multiple files per case
+- File categories:
+  - Evidence
+  - Legal Documents
+  - Attachments
+- Secure access (only authorized roles)
+- Versioning support
+
+---
+
+8. NOTIFICATIONS SYSTEM
+- Email + in-app notifications
+- Trigger events:
+  - Case status changes
+  - New message
+  - Hearing schedule
+
+---
+
+9. AUDIT & LOGGING
+- Track:
+  - User actions
+  - Case updates
+  - File uploads
+- Required for compliance
+
+---
+
+10. SEARCH & FILTERING
+- Search cases by:
+  - Case number
+  - Name
+  - Status
+- Advanced filtering
+
+---
+
+11. RESPONSIVE DESIGN
+- Fully mobile responsive
+- Clean government-style UI
+- Accessible (WCAG-friendly)
+
+---
+
+DATABASE REQUIREMENTS:
+- Use Prisma ORM
+- Normalize relationships
+- Use UUIDs for IDs
+- Include timestamps (createdAt, updatedAt)
+- Soft delete support
+
+---
+
+SECURITY:
+- Input validation (Zod)
+- Rate limiting
+- CSRF protection
+- Secure file uploads
+
+---
+
+DELIVERABLES:
+- Full folder structure
+- schema.prisma
+- API routes
+- Sample UI pages
+- Middleware for auth
+- Seed script
+
+Make sure code is modular, clean, and scalable.

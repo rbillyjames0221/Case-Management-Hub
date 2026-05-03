@@ -1,0 +1,1304 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification for the Office of Legal Affairs Case Management System
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: auth
+    description: Authentication and user management
+  - name: cases
+    description: Case management
+  - name: files
+    description: File management
+  - name: messages
+    description: Messaging
+  - name: hearings
+    description: Hearing management
+  - name: dashboard
+    description: Dashboard and analytics
+  - name: audit
+    description: Audit logs
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user profile
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Unauthorized
+
+  /auth/profile:
+    patch:
+      operationId: updateProfile
+      tags: [auth]
+      summary: Update current user profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfileBody"
+      responses:
+        "200":
+          description: Updated user profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+
+  /auth/users:
+    get:
+      operationId: listUsers
+      tags: [auth]
+      summary: List all users (admin only)
+      parameters:
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [SUPER_ADMIN, LEGAL_ADMIN, LAWYER, STAFF, USER]
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserListResponse"
+
+  /auth/users/{id}:
+    get:
+      operationId: getUserById
+      tags: [auth]
+      summary: Get user by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "404":
+          description: User not found
+    patch:
+      operationId: updateUser
+      tags: [auth]
+      summary: Update user (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserBody"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+    delete:
+      operationId: deleteUser
+      tags: [auth]
+      summary: Delete user (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: User deleted
+
+  /auth/users/{id}/role:
+    patch:
+      operationId: updateUserRole
+      tags: [auth]
+      summary: Update user role (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateRoleBody"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+
+  /auth/lawyers:
+    get:
+      operationId: listLawyers
+      tags: [auth]
+      summary: List all lawyers (for assignment)
+      responses:
+        "200":
+          description: List of lawyers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserProfile"
+
+  /cases:
+    get:
+      operationId: listCases
+      tags: [cases]
+      summary: List cases
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [FILED, UNDER_REVIEW, INVESTIGATION, HEARING_SCHEDULED, RESOLVED, ARCHIVED]
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: lawyerId
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: List of cases
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaseListResponse"
+    post:
+      operationId: createCase
+      tags: [cases]
+      summary: File a new case
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCaseBody"
+      responses:
+        "201":
+          description: Created case
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Case"
+
+  /cases/{id}:
+    get:
+      operationId: getCaseById
+      tags: [cases]
+      summary: Get case details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Case details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaseDetail"
+        "404":
+          description: Case not found
+    patch:
+      operationId: updateCase
+      tags: [cases]
+      summary: Update case
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCaseBody"
+      responses:
+        "200":
+          description: Updated case
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Case"
+    delete:
+      operationId: deleteCase
+      tags: [cases]
+      summary: Archive/delete case (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Case deleted
+
+  /cases/{id}/status:
+    patch:
+      operationId: updateCaseStatus
+      tags: [cases]
+      summary: Update case status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateStatusBody"
+      responses:
+        "200":
+          description: Updated case
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Case"
+
+  /cases/{id}/assign:
+    patch:
+      operationId: assignLawyer
+      tags: [cases]
+      summary: Assign lawyer to case (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssignLawyerBody"
+      responses:
+        "200":
+          description: Updated case
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Case"
+
+  /cases/{id}/notes:
+    get:
+      operationId: getCaseNotes
+      tags: [cases]
+      summary: Get internal notes for a case
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of notes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CaseNote"
+    post:
+      operationId: addCaseNote
+      tags: [cases]
+      summary: Add internal note to case
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateNoteBody"
+      responses:
+        "201":
+          description: Created note
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaseNote"
+
+  /cases/{id}/timeline:
+    get:
+      operationId: getCaseTimeline
+      tags: [cases]
+      summary: Get timeline for a case
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Timeline entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TimelineEntry"
+
+  /cases/{id}/files:
+    get:
+      operationId: getCaseFiles
+      tags: [files]
+      summary: List files for a case
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of files
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CaseFile"
+    post:
+      operationId: uploadCaseFile
+      tags: [files]
+      summary: Upload file to case
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                category:
+                  type: string
+                  enum: [EVIDENCE, LEGAL_DOCUMENT, ATTACHMENT]
+              required:
+                - file
+                - category
+      responses:
+        "201":
+          description: Uploaded file
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaseFile"
+
+  /files/{id}:
+    delete:
+      operationId: deleteFile
+      tags: [files]
+      summary: Delete a file
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: File deleted
+
+  /cases/{id}/messages:
+    get:
+      operationId: getCaseMessages
+      tags: [messages]
+      summary: Get messages for a case
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Message"
+    post:
+      operationId: sendMessage
+      tags: [messages]
+      summary: Send message on a case
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMessageBody"
+      responses:
+        "201":
+          description: Sent message
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+
+  /cases/{id}/hearings:
+    get:
+      operationId: getCaseHearings
+      tags: [hearings]
+      summary: Get hearings for a case
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of hearings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Hearing"
+    post:
+      operationId: scheduleHearing
+      tags: [hearings]
+      summary: Schedule a hearing
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateHearingBody"
+      responses:
+        "201":
+          description: Scheduled hearing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Hearing"
+
+  /hearings/{id}:
+    patch:
+      operationId: updateHearing
+      tags: [hearings]
+      summary: Update a hearing
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateHearingBody"
+      responses:
+        "200":
+          description: Updated hearing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Hearing"
+    delete:
+      operationId: deleteHearing
+      tags: [hearings]
+      summary: Delete a hearing
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Hearing deleted
+
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [dashboard]
+      summary: Get dashboard statistics
+      responses:
+        "200":
+          description: Dashboard statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /dashboard/recent-activity:
+    get:
+      operationId: getRecentActivity
+      tags: [dashboard]
+      summary: Get recent activity feed
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Recent activity
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityItem"
+
+  /dashboard/my-cases:
+    get:
+      operationId: getMyCases
+      tags: [dashboard]
+      summary: Get cases for current user
+      responses:
+        "200":
+          description: My cases
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaseListResponse"
+
+  /dashboard/upcoming-hearings:
+    get:
+      operationId: getUpcomingHearings
+      tags: [dashboard]
+      summary: Get upcoming hearings
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 5
+      responses:
+        "200":
+          description: Upcoming hearings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HearingWithCase"
+
+  /audit-logs:
+    get:
+      operationId: listAuditLogs
+      tags: [audit]
+      summary: List audit logs (admin only)
+      parameters:
+        - name: userId
+          in: query
+          schema:
+            type: string
+        - name: entity
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        "200":
+          description: Audit logs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditLogListResponse"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    UserRole:
+      type: string
+      enum: [SUPER_ADMIN, LEGAL_ADMIN, LAWYER, STAFF, USER]
+
+    CaseStatus:
+      type: string
+      enum: [FILED, UNDER_REVIEW, INVESTIGATION, HEARING_SCHEDULED, RESOLVED, ARCHIVED]
+
+    FileCategory:
+      type: string
+      enum: [EVIDENCE, LEGAL_DOCUMENT, ATTACHMENT]
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        clerkId:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          $ref: "#/components/schemas/UserRole"
+        phone:
+          type: ["string", "null"]
+        address:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - clerkId
+        - name
+        - email
+        - role
+        - createdAt
+        - updatedAt
+
+    UpdateProfileBody:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+        address:
+          type: string
+
+    UpdateUserBody:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+        address:
+          type: string
+
+    UpdateRoleBody:
+      type: object
+      properties:
+        role:
+          $ref: "#/components/schemas/UserRole"
+      required:
+        - role
+
+    UserListResponse:
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserProfile"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+      required:
+        - users
+        - total
+        - page
+        - limit
+
+    Case:
+      type: object
+      properties:
+        id:
+          type: string
+        caseNumber:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          $ref: "#/components/schemas/CaseStatus"
+        partiesInvolved:
+          type: string
+        filedById:
+          type: string
+        lawyerId:
+          type: ["string", "null"]
+        deletedAt:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - caseNumber
+        - title
+        - description
+        - status
+        - partiesInvolved
+        - filedById
+        - createdAt
+        - updatedAt
+
+    CaseDetail:
+      type: object
+      properties:
+        id:
+          type: string
+        caseNumber:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          $ref: "#/components/schemas/CaseStatus"
+        partiesInvolved:
+          type: string
+        filedById:
+          type: string
+        lawyerId:
+          type: ["string", "null"]
+        deletedAt:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        filedBy:
+          $ref: "#/components/schemas/UserProfile"
+        lawyer:
+          oneOf:
+            - $ref: "#/components/schemas/UserProfile"
+            - type: "null"
+        files:
+          type: array
+          items:
+            $ref: "#/components/schemas/CaseFile"
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/Message"
+        hearings:
+          type: array
+          items:
+            $ref: "#/components/schemas/Hearing"
+        timeline:
+          type: array
+          items:
+            $ref: "#/components/schemas/TimelineEntry"
+      required:
+        - id
+        - caseNumber
+        - title
+        - description
+        - status
+        - partiesInvolved
+        - filedById
+        - createdAt
+        - updatedAt
+        - filedBy
+        - files
+        - messages
+        - hearings
+        - timeline
+
+    CreateCaseBody:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        partiesInvolved:
+          type: string
+      required:
+        - title
+        - description
+        - partiesInvolved
+
+    UpdateCaseBody:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        partiesInvolved:
+          type: string
+
+    UpdateStatusBody:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/CaseStatus"
+        notes:
+          type: string
+      required:
+        - status
+
+    AssignLawyerBody:
+      type: object
+      properties:
+        lawyerId:
+          type: ["string", "null"]
+      required:
+        - lawyerId
+
+    CaseListResponse:
+      type: object
+      properties:
+        cases:
+          type: array
+          items:
+            $ref: "#/components/schemas/Case"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+      required:
+        - cases
+        - total
+        - page
+        - limit
+
+    CaseNote:
+      type: object
+      properties:
+        id:
+          type: string
+        content:
+          type: string
+        caseId:
+          type: string
+        authorId:
+          type: string
+        author:
+          $ref: "#/components/schemas/UserProfile"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - content
+        - caseId
+        - authorId
+        - author
+        - createdAt
+        - updatedAt
+
+    CreateNoteBody:
+      type: object
+      properties:
+        content:
+          type: string
+      required:
+        - content
+
+    TimelineEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        action:
+          type: string
+        notes:
+          type: ["string", "null"]
+        caseId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - action
+        - caseId
+        - createdAt
+
+    CaseFile:
+      type: object
+      properties:
+        id:
+          type: string
+        filename:
+          type: string
+        originalName:
+          type: string
+        mimeType:
+          type: string
+        size:
+          type: integer
+        category:
+          $ref: "#/components/schemas/FileCategory"
+        caseId:
+          type: string
+        uploadedById:
+          type: string
+        uploadedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - filename
+        - originalName
+        - mimeType
+        - size
+        - category
+        - caseId
+        - uploadedById
+        - uploadedAt
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+        content:
+          type: string
+        caseId:
+          type: string
+        senderId:
+          type: string
+        sender:
+          $ref: "#/components/schemas/UserProfile"
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - content
+        - caseId
+        - senderId
+        - sender
+        - createdAt
+
+    CreateMessageBody:
+      type: object
+      properties:
+        content:
+          type: string
+      required:
+        - content
+
+    Hearing:
+      type: object
+      properties:
+        id:
+          type: string
+        date:
+          type: string
+          format: date-time
+        location:
+          type: string
+        notes:
+          type: ["string", "null"]
+        caseId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - date
+        - location
+        - caseId
+        - createdAt
+
+    HearingWithCase:
+      type: object
+      properties:
+        id:
+          type: string
+        date:
+          type: string
+          format: date-time
+        location:
+          type: string
+        notes:
+          type: ["string", "null"]
+        caseId:
+          type: string
+        caseNumber:
+          type: string
+        caseTitle:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - date
+        - location
+        - caseId
+        - caseNumber
+        - caseTitle
+        - createdAt
+
+    CreateHearingBody:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date-time
+        location:
+          type: string
+        notes:
+          type: string
+      required:
+        - date
+        - location
+
+    UpdateHearingBody:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date-time
+        location:
+          type: string
+        notes:
+          type: string
+
+    DashboardStats:
+      type: object
+      properties:
+        totalCases:
+          type: integer
+        filedCases:
+          type: integer
+        underReviewCases:
+          type: integer
+        investigationCases:
+          type: integer
+        hearingScheduledCases:
+          type: integer
+        resolvedCases:
+          type: integer
+        archivedCases:
+          type: integer
+        totalUsers:
+          type: integer
+        totalLawyers:
+          type: integer
+        casesThisMonth:
+          type: integer
+        resolvedThisMonth:
+          type: integer
+      required:
+        - totalCases
+        - filedCases
+        - underReviewCases
+        - investigationCases
+        - hearingScheduledCases
+        - resolvedCases
+        - archivedCases
+        - totalUsers
+        - totalLawyers
+        - casesThisMonth
+        - resolvedThisMonth
+
+    ActivityItem:
+      type: object
+      properties:
+        id:
+          type: string
+        action:
+          type: string
+        entity:
+          type: string
+        entityId:
+          type: string
+        userId:
+          type: string
+        userName:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - action
+        - entity
+        - entityId
+        - userId
+        - userName
+        - createdAt
+
+    AuditLog:
+      type: object
+      properties:
+        id:
+          type: string
+        action:
+          type: string
+        entity:
+          type: string
+        entityId:
+          type: string
+        userId:
+          type: string
+        user:
+          $ref: "#/components/schemas/UserProfile"
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - action
+        - entity
+        - entityId
+        - userId
+        - user
+        - createdAt
+
+    AuditLogListResponse:
+      type: object
+      properties:
+        logs:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditLog"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+      required:
+        - logs
+        - total
+        - page
+        - limit

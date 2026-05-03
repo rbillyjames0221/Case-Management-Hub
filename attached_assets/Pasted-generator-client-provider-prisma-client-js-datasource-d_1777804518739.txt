@@ -1,0 +1,136 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  LEGAL_ADMIN
+  LAWYER
+  STAFF
+  USER
+}
+
+enum CaseStatus {
+  FILED
+  UNDER_REVIEW
+  INVESTIGATION
+  HEARING_SCHEDULED
+  RESOLVED
+  ARCHIVED
+}
+
+enum FileCategory {
+  EVIDENCE
+  LEGAL_DOCUMENT
+  ATTACHMENT
+}
+
+model User {
+  id          String   @id @default(uuid())
+  name        String
+  email       String   @unique
+  password    String
+  role        Role     @default(USER)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  casesFiled  Case[]   @relation("FiledCases")
+  assigned    Case[]   @relation("AssignedLawyer")
+  messages    Message[]
+  logs        AuditLog[]
+}
+
+model Case {
+  id              String      @id @default(uuid())
+  caseNumber      String      @unique
+  title           String
+  description     String
+  status          CaseStatus  @default(FILED)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  filedById       String
+  filedBy         User        @relation("FiledCases", fields: [filedById], references: [id])
+
+  lawyerId        String?
+  lawyer          User?       @relation("AssignedLawyer", fields: [lawyerId], references: [id])
+
+  files           File[]
+  timeline        CaseTimeline[]
+  messages        Message[]
+  hearings        Hearing[]
+}
+
+model File {
+  id          String       @id @default(uuid())
+  filename    String
+  path        String
+  category    FileCategory
+  uploadedAt  DateTime     @default(now())
+
+  caseId      String
+  case        Case         @relation(fields: [caseId], references: [id])
+}
+
+model CaseTimeline {
+  id          String     @id @default(uuid())
+  action      String
+  notes       String?
+  createdAt   DateTime   @default(now())
+
+  caseId      String
+  case        Case       @relation(fields: [caseId], references: [id])
+}
+
+model Hearing {
+  id          String     @id @default(uuid())
+  date        DateTime
+  location    String
+  notes       String?
+
+  caseId      String
+  case        Case       @relation(fields: [caseId], references: [id])
+}
+
+model Message {
+  id          String     @id @default(uuid())
+  content     String
+  createdAt   DateTime   @default(now())
+
+  senderId    String
+  sender      User       @relation(fields: [senderId], references: [id])
+
+  caseId      String
+  case        Case       @relation(fields: [caseId], references: [id])
+}
+
+model AuditLog {
+  id          String     @id @default(uuid())
+  action      String
+  entity      String
+  entityId    String
+  createdAt   DateTime   @default(now())
+
+  userId      String
+  user        User       @relation(fields: [userId], references: [id])
+}
+🔥 EXTRA FEATURES (HIGHLY RECOMMENDED)
+
+If you want this to feel enterprise-level, add:
+
+✅ Digital Signature Support
+Approve documents legally
+✅ Case Priority System
+LOW / MEDIUM / HIGH / URGENT
+✅ AI Assistance (Optional)
+Summarize case files
+Suggest legal actions
+✅ OCR Document Parsing
+Extract data from PDFs
+✅ SLA Tracking
+Track deadlines per case
